@@ -25,14 +25,14 @@ bool LinearProbingHashTable::insert(const string& elem) {
     }
     int bucket = hashFn(elem);
     while (true) {
-    if (elems[bucket].type == SlotType::EMPTY || elems[bucket].type == SlotType::TOMBSTONE) {
-        elems[bucket].value = elem;
-        elems[bucket].type = SlotType::FILLED;
-        numsize++;
-        return true;
-    } else {
-        bucket = (++bucket) % hashFn.numSlots();
-    }
+        if (elems[bucket].type == SlotType::EMPTY || elems[bucket].type == SlotType::TOMBSTONE) {
+            elems[bucket].value = elem;
+            elems[bucket].type = SlotType::FILLED;
+            numsize++;
+            return true;
+        } else {
+            bucket = (++bucket) % hashFn.numSlots();
+        }
     }
 }
 
@@ -40,7 +40,7 @@ bool LinearProbingHashTable::contains(const string& elem) const {
     int bucket = hashFn(elem);
     int cur = bucket;
     while (elems[bucket].type != SlotType::EMPTY) {
-        if (elems[bucket].value == elem) {
+        if (elems[bucket].value == elem && elems[bucket].type == SlotType::FILLED) {
             return true;
         }
         bucket = (++bucket) % hashFn.numSlots();
@@ -52,13 +52,25 @@ bool LinearProbingHashTable::contains(const string& elem) const {
 }
 
 bool LinearProbingHashTable::remove(const string& elem) {
-    /* TODO: Delete this comment and the next lines, then implement this function. */
-    (void) elem;
+    if (!contains(elem)) {
+        return false;
+    }
+    int bucket = hashFn(elem);
+    while (elems[bucket].type != SlotType::EMPTY) {
+        if (elems[bucket].value == elem && elems[bucket].type == SlotType::FILLED) {
+            elems[bucket].type = SlotType::TOMBSTONE;
+            numsize--;
+            return true;
+        }
+        bucket = (++bucket) % hashFn.numSlots();
+    }
     return false;
 }
 
 void LinearProbingHashTable::printDebugInfo() const {
-    /* TODO: Remove this comment and implement this function. */
+    for (int i = 0; i < hashFn.numSlots(); i++) {
+        cout<<elems[i].type<<endl;
+    }
 }
 
 
@@ -800,7 +812,7 @@ PROVIDED_TEST("Stress Test: Inserts/searches/deletes work in expected time O(1) 
 #include "filelib.h"
 #include "Demos/Timer.h"
 PROVIDED_TEST("Stress test: Core functions do not cause stack overflows (should take at most 15 seconds)") {
-    SHOW_ERROR("Stress test is disabled by default. To run it, comment out line " + to_string(__LINE__) + " of " + getTail(__FILE__) + ".");
+    //SHOW_ERROR("Stress test is disabled by default. To run it, comment out line " + to_string(__LINE__) + " of " + getTail(__FILE__) + ".");
     const int kTableSize = 1000000;
 
     /* Create a table with 1,000,000 slots, then fill in the first 999,999 of them. */
@@ -837,7 +849,7 @@ PROVIDED_TEST("Stress test: Core functions do not cause stack overflows (should 
 
 #include <fstream>
 PROVIDED_TEST("Stress Test: Handles large workflows with little free space (should take at most fifteen seconds)") {
-    SHOW_ERROR("Stress test is disabled by default. To run it, comment out line " + to_string(__LINE__) + " of " + getTail(__FILE__) + ".");
+    //SHOW_ERROR("Stress test is disabled by default. To run it, comment out line " + to_string(__LINE__) + " of " + getTail(__FILE__) + ".");
 
     Vector<string> english;
     ifstream input("res/EnglishWords.txt");
